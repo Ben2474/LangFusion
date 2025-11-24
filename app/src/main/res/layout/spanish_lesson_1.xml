@@ -4,12 +4,12 @@
     android:layout_height="match_parent">
 
     <ImageView
-        android:id="@+id/lesson_2_image"
+        android:id="@+id/home_image"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
-        android:src="@drawable/img_14"
-        android:contentDescription="@drawable/img_14"
+        android:src="@drawable/spanishlesson1"
+        android:contentDescription="@drawable/spanishlesson1"
         />
 
 </RelativeLayout>

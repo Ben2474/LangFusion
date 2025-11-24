@@ -8,8 +8,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
-        android:src="@drawable/home"
-        android:contentDescription="@drawable/home"
+        android:src="@drawable/italianlesson1"
+        android:contentDescription="@drawable/italianlesson1"
         />
 
 </RelativeLayout>

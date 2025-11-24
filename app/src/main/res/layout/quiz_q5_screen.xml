@@ -4,12 +4,12 @@
     android:layout_height="match_parent">
 
     <ImageView
-        android:id="@+id/challenges_menu_image"
+        android:id="@+id/home_image"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
-        android:src="@drawable/img_9"
-        android:contentDescription="@drawable/img_9"
+        android:src="@drawable/quizq5"
+        android:contentDescription="@drawable/quizq5"
         />
 
 </RelativeLayout>
