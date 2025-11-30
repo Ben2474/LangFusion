@@ -4,26 +4,97 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import edu.farmingdale.langfusion.data.LangFusionDatabase
+import edu.farmingdale.langfusion.data.User
 import edu.farmingdale.langfusion.ui.theme.LangFusionTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val db = LangFusionDatabase.getInstance(this)
+        val userDao = db.userDao()
+
         setContent {
             LangFusionTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+
+                val navController = rememberNavController()
+                var loginError by remember {mutableStateOf<String?>(null) }
+
+                NavHost(navController = navController, startDestination = "welcome"){
+                    composable("welcome"){
+                        WelcomeScreen(
+                            onLoginClick = {navController.navigate("login")},
+                            onRegisterClick = {navController.navigate("register")}
+                        )
+                    }
+
+                    composable("login") {LoginScreen(onLoginClick = {email, password -> lifecycleScope.launch{
+                        val user = userDao.getUserByEmail(email)
+                        if (user != null && user.passwordHash == password) {
+                            loginError = null
+                            navController.navigate("home")
+                        } else {
+                            loginError = "Invalid email or password"
+                        }
+                    }
+                    },
+                        errorMessage = loginError,
+                        onDismissError = {loginError = null}
                     )
+                    }
+                    composable("register") {RegisterScreen{ first, last, dob, email, password ->
+                        lifecycleScope.launch {
+                            val user = User(
+                                firstName = first,
+                                lastName = last,
+                                dateOfBirth = dob,
+                                email = email,
+                                passwordHash = password
+                            )
+                            userDao.insertUser(user)
+                            navController.navigate("login")
+                        }
+                    }
+                    }
+                    composable("home") {HomeScreen()}
                 }
             }
         }
@@ -31,17 +102,459 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
+fun WelcomeScreen(
+    onLoginClick: () -> Unit,
+    onRegisterClick: () -> Unit
+) {
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.welcome),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        Box(modifier = Modifier
+            .offset(y = 495.dp)
+            .fillMaxWidth()
+            .height(56.dp)
+            .clickable {onLoginClick()}
+        )
+        Box(modifier = Modifier
+            .offset(y = 600.dp)
+            .fillMaxWidth()
+            .height(56.dp)
+            .clickable {onRegisterClick()}
+        )
+    }
+}
+@Composable
+fun LoginScreen(
+    onLoginClick: (String, String) -> Unit,
+    errorMessage: String? = null,
+    onDismissError: () -> Unit = {}
+){
+    var email by remember {mutableStateOf("")}
+    var password by remember {mutableStateOf("")}
+
+    Box(Modifier.fillMaxSize()){
+        Image(
+            painter = painterResource(R.drawable.login),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.FillBounds
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(290.dp))
+
+            InvisibleField(
+                value = email,
+                onChange = { email = it },
+                isPassword = false
+            )
+
+            Spacer(modifier = Modifier.height(100.dp))
+
+            InvisibleField(
+                value = password,
+                onChange = { password = it },
+                isPassword = true
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .clickable { onLoginClick(email, password) }
+            )
+        }
+    }
+
+    if (errorMessage != null){
+        AlertDialog(
+            onDismissRequest = onDismissError,
+            confirmButton = {
+                TextButton(onClick = onDismissError){
+                    Text("Ok")
+                }
+            },
+            title = { Text("Login error", style = MaterialTheme.typography.titleLarge)},
+            text = {Text(errorMessage)}
+        )
+    }
+}
+@Composable
+fun RegisterScreen(
+    onRegisterClick: (String, String, String, String, String) -> Unit
+){
+    var firstName by remember {mutableStateOf("")  }
+    var lastName by remember {mutableStateOf("")  }
+    var dob by remember {mutableStateOf("")  }
+    var email by remember {mutableStateOf("")  }
+    var password by remember {mutableStateOf("")  }
+
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.register),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.FillBounds
+        )
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ){
+            Spacer(modifier = Modifier.height(220.dp))
+
+            InvisibleField(firstName, onChange = {firstName = it })
+            Spacer(modifier = Modifier.height(60.dp))
+
+            InvisibleField(lastName, onChange =  { lastName = it })
+            Spacer(modifier = Modifier.height(60.dp))
+
+            InvisibleField(dob, onChange =  { dob = it })
+            Spacer(modifier = Modifier.height(60.dp))
+
+            InvisibleField(email, onChange =  { email = it })
+            Spacer(modifier = Modifier.height(60.dp))
+
+            InvisibleField(password, onChange =  { password = it }, isPassword = true)
+            Spacer(modifier = Modifier.height(60.dp))
+
+            Box(
+                modifier = Modifier
+                    .offset(y = (-40).dp)
+                    .fillMaxWidth()
+                    .height(40.dp)
+                    .clickable { onRegisterClick(firstName, lastName, dob, email, password) }
+            )
+        }
+    }
+}
+
+@Composable
+fun InvisibleField(
+    value: String,
+    onChange: (String) -> Unit,
+    isPassword: Boolean = false
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onChange,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+            //.background(Color.Transparent),
+        placeholder = { },
+        visualTransformation = if(isPassword){
+            PasswordVisualTransformation()
+        } else {
+            VisualTransformation.None
+        },
+        textStyle = LocalTextStyle.current.copy(fontSize = 20.sp),
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedBorderColor = Color.Transparent,
+            focusedBorderColor = Color.Transparent,
+            cursorColor = Color.Black,
+            unfocusedContainerColor = Color.Transparent,
+            focusedContainerColor = Color.Transparent,
+            focusedTextColor = Color.Black,
+            unfocusedTextColor = Color.Black
+        )
     )
 }
 
-@Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
-    LangFusionTheme {
-        Greeting("Android")
+fun HomeScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.home),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.FillBounds
+        )
+    }
+}
+@Composable
+fun SpanishLessonScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.spanishlessonmenu),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun ProgressDashboardScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.progressdashboard),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun QuizMenuScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.quizmenu),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun SettingsScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.settings),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun WeeklyChallengeMenuScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.weeklychallengemenu),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun WeeklyChallengeScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.weeklychallenge),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun ProfileScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.profile),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun SpeechScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.speech),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun ItalianLessonScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.italianlessonmenu),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun FrenchLessonScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.frenchlessonmenu),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun SpanishLessonOneScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.spanishlesson1),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun SpanishLessonTwoScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.spanishlesson2),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun SpanishLessonThreeScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.spanishlesson3),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun FrenchLessonOneScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.frenchlesson1),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun FrenchLessonTwoScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.frenchlesson2),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun FrenchLessonThreeScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.frenchlesson3),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun ItalianLessonOneScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.italianlesson1),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun ItalianLessonTwoScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.italianlesson2),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun ItalianLessonThreeScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.italianlesson3),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun QuizQOneScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.quizq1),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun QuizQTwoScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.quizq2),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun QuizQThreeScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.quizq3),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun QuizQFourScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.quizq4),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun QuizQFiveScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.quizq5),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+@Composable
+fun ChatBoxScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.chatbox),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
     }
 }
