@@ -192,8 +192,11 @@ class MainActivity : ComponentActivity() {
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
                         onChatboxIconClick = {navController.navigate("chatbox")},
-                        onSettingsIconClick = {navController.navigate("settings")}
-                    )}
+                        onSettingsIconClick = {navController.navigate("settings")},
+                        onSpanishLessonOneClick = {navController.navigate("spanishLesson1")},
+                        onSpanishLessonTwoClick = {navController.navigate("spanishLesson2")},
+                        onSpanishLessonThreeClick = {navController.navigate("spanishLesson3")}
+                        )}
                     composable("spanishLesson1") {SpanishLessonOneScreen(
                         onProfileClick = {navController.navigate("profile")},
                         onHomeIconClick = {navController.navigate("home")},
@@ -224,7 +227,10 @@ class MainActivity : ComponentActivity() {
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
                         onChatboxIconClick = {navController.navigate("chatbox")},
-                        onSettingsIconClick = {navController.navigate("settings")}
+                        onSettingsIconClick = {navController.navigate("settings")},
+                        onFrenchLessonOneClick = {navController.navigate("frenchLesson1")},
+                        onFrenchLessonTwoClick = {navController.navigate("frenchLesson2")},
+                        onFrenchLessonThreeClick = {navController.navigate("frenchLesson3")}
                     )}
                     composable("frenchLesson1") {FrenchLessonOneScreen(
                         onProfileClick = {navController.navigate("profile")},
@@ -256,7 +262,10 @@ class MainActivity : ComponentActivity() {
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
                         onChatboxIconClick = {navController.navigate("chatbox")},
-                        onSettingsIconClick = {navController.navigate("settings")}
+                        onSettingsIconClick = {navController.navigate("settings")},
+                        onItalianLessonOneClick = {navController.navigate("italianLesson1")},
+                        onItalianLessonTwoClick = {navController.navigate("italianLesson2")},
+                        onItalianLessonThreeClick = {navController.navigate("italianLesson3")}
                     )}
                     composable("italianLesson1") {ItalianLessonOneScreen(
                         onProfileClick = {navController.navigate("profile")},
@@ -711,8 +720,11 @@ fun SpanishLessonScreen(
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
     onChatboxIconClick: () -> Unit = {},
-    onSettingsIconClick: () -> Unit = {}
-){
+    onSettingsIconClick: () -> Unit = {},
+    onSpanishLessonOneClick: () -> Unit = {},
+    onSpanishLessonTwoClick: () -> Unit = {},
+    onSpanishLessonThreeClick: () -> Unit = {}
+    ){
     Box(Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(R.drawable.spanishlessonmenu),
@@ -762,6 +774,30 @@ fun SpanishLessonScreen(
                 .offset(x = 350.dp, y = 830.dp)
                 .size(48.dp)
                 .clickable{onSettingsIconClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 350.dp)
+                .fillMaxWidth()
+                .height(30.dp)
+                .clickable{onSpanishLessonOneClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 450.dp)
+                .fillMaxWidth()
+                .height(30.dp)
+                .clickable{onSpanishLessonTwoClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 550.dp)
+                .fillMaxWidth()
+                .height(30.dp)
+                .clickable{onSpanishLessonThreeClick()}
         )
     }
 }
@@ -1199,7 +1235,10 @@ fun ItalianLessonScreen(
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
     onChatboxIconClick: () -> Unit = {},
-    onSettingsIconClick: () -> Unit = {}
+    onSettingsIconClick: () -> Unit = {},
+    onItalianLessonOneClick: () -> Unit = {},
+    onItalianLessonTwoClick: () -> Unit = {},
+    onItalianLessonThreeClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
         Image(
@@ -1251,6 +1290,30 @@ fun ItalianLessonScreen(
                 .size(48.dp)
                 .clickable{onSettingsIconClick()}
         )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 350.dp)
+                .fillMaxWidth()
+                .height(30.dp)
+                .clickable{onItalianLessonOneClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 450.dp)
+                .fillMaxWidth()
+                .height(30.dp)
+                .clickable{onItalianLessonTwoClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 550.dp)
+                .fillMaxWidth()
+                .height(30.dp)
+                .clickable{onItalianLessonThreeClick()}
+        )
     }
 }
 @Composable
@@ -1260,7 +1323,10 @@ fun FrenchLessonScreen(
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
     onChatboxIconClick: () -> Unit = {},
-    onSettingsIconClick: () -> Unit = {}
+    onSettingsIconClick: () -> Unit = {},
+    onFrenchLessonOneClick: () -> Unit = {},
+    onFrenchLessonTwoClick: () -> Unit = {},
+    onFrenchLessonThreeClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
         Image(
@@ -1311,6 +1377,30 @@ fun FrenchLessonScreen(
                 .offset(x = 350.dp, y = 830.dp)
                 .size(48.dp)
                 .clickable{onSettingsIconClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 350.dp)
+                .fillMaxWidth()
+                .height(30.dp)
+                .clickable{onFrenchLessonOneClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 450.dp)
+                .fillMaxWidth()
+                .height(30.dp)
+                .clickable{onFrenchLessonTwoClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 550.dp)
+                .fillMaxWidth()
+                .height(30.dp)
+                .clickable{onFrenchLessonThreeClick()}
         )
     }
 }
