@@ -113,7 +113,12 @@ class MainActivity : ComponentActivity() {
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
                         onChatboxIconClick = {navController.navigate("chatbox")},
-                        onSettingsIconClick = {navController.navigate("settings")}
+                        onSettingsIconClick = {navController.navigate("settings")},
+                        onSpanishLessonMenuClick = {navController.navigate("spanishLessons")},
+                        onFrenchLessonMenuClick = {navController.navigate("frenchLessons")},
+                        onItalianLessonMenuClick = {navController.navigate("italianLessons")}
+
+
                     )}
 
                     composable("quizMenu") {QuizMenuScreen(
@@ -618,7 +623,10 @@ fun LessonMenuScreen(
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
     onChatboxIconClick: () -> Unit = {},
-    onSettingsIconClick: () -> Unit = {}
+    onSettingsIconClick: () -> Unit = {},
+    onSpanishLessonMenuClick: () -> Unit = {},
+    onFrenchLessonMenuClick: () -> Unit = {},
+    onItalianLessonMenuClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
         Image(
@@ -634,6 +642,30 @@ fun LessonMenuScreen(
                 .fillMaxWidth()
                 .height(30.dp)
                 .clickable{onProfileClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 350.dp)
+                .fillMaxWidth()
+                .height(30.dp)
+                .clickable{onSpanishLessonMenuClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 450.dp)
+                .fillMaxWidth()
+                .height(30.dp)
+                .clickable{onFrenchLessonMenuClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 550.dp)
+                .fillMaxWidth()
+                .height(30.dp)
+                .clickable{onItalianLessonMenuClick()}
         )
 
         Box(
