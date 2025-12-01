@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -94,7 +96,25 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     }
-                    composable("home") {HomeScreen()}
+                    composable("home") {HomeScreen(
+                        onQuickStartClick = {navController.navigate("lessonMenu")},
+                        onQuizzesClick =  {navController.navigate("quizMenu")},
+                        onChallengesClick = {navController.navigate("weeklyChallengeMenu")},
+                        onProfileClick = {navController.navigate("profile")},
+                        onHomeIconClick = {navController.navigate("home")},
+                        onLessonIconClick = {navController.navigate("lessonMenu")},
+                        onSpeechIconClick = {navController.navigate("speech")},
+                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onSettingsIconClick = {navController.navigate("settings")},
+                        )
+                    }
+                    composable("lessonMenu") {LessonMenuScreen()}
+                    composable("quizMenu") {QuizMenuScreen()}
+                    composable("weeklyChallengeMenu") {WeeklyChallengeMenuScreen()}
+                    composable("profile") {ProfileScreen()}
+                    composable("speech") {SpeechScreen()}
+                    composable("chatbox") {ChatBoxScreen()}
+                    composable("settings") {SettingsScreen()}
                 }
             }
         }
@@ -199,6 +219,9 @@ fun RegisterScreen(
     var dob by remember {mutableStateOf("")  }
     var email by remember {mutableStateOf("")  }
     var password by remember {mutableStateOf("")  }
+    var errorMessage by remember {mutableStateOf<String?>(null)  }
+
+    fun isValidEmail(text: String): Boolean = android.util.Patterns.EMAIL_ADDRESS.matcher(text).matches()
 
     Box(Modifier.fillMaxSize()) {
         Image(
@@ -234,7 +257,33 @@ fun RegisterScreen(
                     .offset(y = (-40).dp)
                     .fillMaxWidth()
                     .height(40.dp)
-                    .clickable { onRegisterClick(firstName, lastName, dob, email, password) }
+                    .clickable {
+                        when {
+                            firstName.isBlank() -> errorMessage = "First name is required"
+                            lastName.isBlank() -> errorMessage = "Last name is required"
+                            dob.isBlank() -> errorMessage = "Date of Birth is required"
+                            email.isBlank() -> errorMessage = "Email is required"
+                            !isValidEmail(email) -> errorMessage = "Enter a valid email"
+                            password.length < 6 -> errorMessage = "Password should be at least 6 characters"
+                            else -> {
+                                errorMessage = null
+                                onRegisterClick(firstName, lastName, dob, email, password)
+                            }
+                        }
+                    }
+            )
+        }
+
+        if (errorMessage != null){
+            AlertDialog(
+                onDismissRequest = {errorMessage = null},
+                confirmButton = {
+                    TextButton(onClick = {errorMessage = null}) {
+                        Text("Ok")
+                    }
+                },
+                title = {Text("Registration error")},
+                text = {Text(errorMessage ?: "")}
             )
         }
     }
@@ -252,7 +301,6 @@ fun InvisibleField(
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp),
-            //.background(Color.Transparent),
         placeholder = { },
         visualTransformation = if(isPassword){
             PasswordVisualTransformation()
@@ -273,10 +321,99 @@ fun InvisibleField(
 }
 
 @Composable
-fun HomeScreen(){
+fun HomeScreen(
+    onQuickStartClick: () -> Unit = {},
+    onQuizzesClick: () -> Unit = {},
+    onChallengesClick: () -> Unit = {},
+    onProfileClick: () -> Unit = {},
+    onHomeIconClick: () -> Unit = {},
+    onLessonIconClick: () -> Unit = {},
+    onSpeechIconClick: () -> Unit = {},
+    onChatboxIconClick: () -> Unit = {},
+    onSettingsIconClick: () -> Unit = {}
+){
     Box(Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(R.drawable.home),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.FillBounds
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 500.dp)
+                .fillMaxWidth()
+                .height(30.dp)
+                .clickable{onQuickStartClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = (-230).dp, y = 620.dp)
+                .fillMaxWidth()
+                .height(30.dp)
+                .clickable{onQuizzesClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 230.dp, y = 620.dp)
+                .fillMaxWidth()
+                .height(30.dp)
+                .clickable{onChallengesClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 230.dp, y = 95.dp)
+                .fillMaxWidth()
+                .height(30.dp)
+                .clickable{onProfileClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 20.dp, y = 830.dp)
+                .size(48.dp)
+                .clickable{onHomeIconClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 105.dp, y = 830.dp)
+                .size(48.dp)
+                .clickable{onLessonIconClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 180.dp, y = 830.dp)
+                .size(48.dp)
+                .clickable{onSpeechIconClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 270.dp, y = 830.dp)
+                .size(48.dp)
+                .clickable{onChatboxIconClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 350.dp, y = 830.dp)
+                .size(48.dp)
+                .clickable{onSettingsIconClick()}
+        )
+    }
+}
+
+@Composable
+fun LessonMenuScreen(){
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.lessonsmenu),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.FillBounds
@@ -290,7 +427,7 @@ fun SpanishLessonScreen(){
             painter = painterResource(R.drawable.spanishlessonmenu),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -301,7 +438,7 @@ fun ProgressDashboardScreen(){
             painter = painterResource(R.drawable.progressdashboard),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -312,7 +449,7 @@ fun QuizMenuScreen(){
             painter = painterResource(R.drawable.quizmenu),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -323,7 +460,7 @@ fun SettingsScreen(){
             painter = painterResource(R.drawable.settings),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -334,7 +471,7 @@ fun WeeklyChallengeMenuScreen(){
             painter = painterResource(R.drawable.weeklychallengemenu),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -345,7 +482,7 @@ fun WeeklyChallengeScreen(){
             painter = painterResource(R.drawable.weeklychallenge),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -356,7 +493,7 @@ fun ProfileScreen(){
             painter = painterResource(R.drawable.profile),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -367,7 +504,7 @@ fun SpeechScreen(){
             painter = painterResource(R.drawable.speech),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -378,7 +515,7 @@ fun ItalianLessonScreen(){
             painter = painterResource(R.drawable.italianlessonmenu),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -389,7 +526,7 @@ fun FrenchLessonScreen(){
             painter = painterResource(R.drawable.frenchlessonmenu),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -400,7 +537,7 @@ fun SpanishLessonOneScreen(){
             painter = painterResource(R.drawable.spanishlesson1),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -411,7 +548,7 @@ fun SpanishLessonTwoScreen(){
             painter = painterResource(R.drawable.spanishlesson2),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -422,7 +559,7 @@ fun SpanishLessonThreeScreen(){
             painter = painterResource(R.drawable.spanishlesson3),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -433,7 +570,7 @@ fun FrenchLessonOneScreen(){
             painter = painterResource(R.drawable.frenchlesson1),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -444,7 +581,7 @@ fun FrenchLessonTwoScreen(){
             painter = painterResource(R.drawable.frenchlesson2),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -455,7 +592,7 @@ fun FrenchLessonThreeScreen(){
             painter = painterResource(R.drawable.frenchlesson3),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -466,7 +603,7 @@ fun ItalianLessonOneScreen(){
             painter = painterResource(R.drawable.italianlesson1),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -477,7 +614,7 @@ fun ItalianLessonTwoScreen(){
             painter = painterResource(R.drawable.italianlesson2),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -488,7 +625,7 @@ fun ItalianLessonThreeScreen(){
             painter = painterResource(R.drawable.italianlesson3),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -499,7 +636,7 @@ fun QuizQOneScreen(){
             painter = painterResource(R.drawable.quizq1),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -510,7 +647,7 @@ fun QuizQTwoScreen(){
             painter = painterResource(R.drawable.quizq2),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -521,7 +658,7 @@ fun QuizQThreeScreen(){
             painter = painterResource(R.drawable.quizq3),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -532,7 +669,7 @@ fun QuizQFourScreen(){
             painter = painterResource(R.drawable.quizq4),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -543,7 +680,7 @@ fun QuizQFiveScreen(){
             painter = painterResource(R.drawable.quizq5),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
@@ -554,7 +691,7 @@ fun ChatBoxScreen(){
             painter = painterResource(R.drawable.chatbox),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
