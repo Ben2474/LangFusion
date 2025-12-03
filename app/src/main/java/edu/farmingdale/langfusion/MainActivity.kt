@@ -23,6 +23,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,16 +43,21 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import edu.farmingdale.langfusion.data.LangFusionDatabase
 import edu.farmingdale.langfusion.data.User
+import edu.farmingdale.langfusion.data.UserProgress
+import edu.farmingdale.langfusion.data.UserProgressDao
 import edu.farmingdale.langfusion.ui.theme.LangFusionTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    private var currentUserId: Long? = null
+    private var currentQuizScore: Int = 0
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         val db = LangFusionDatabase.getInstance(this)
         val userDao = db.userDao()
+        val userProgressDao = db.userProgressDao()
 
         setContent {
             LangFusionTheme {
@@ -70,6 +76,7 @@ class MainActivity : ComponentActivity() {
                     composable("login") {LoginScreen(onLoginClick = {email, password -> lifecycleScope.launch{
                         val user = userDao.getUserByEmail(email)
                         if (user != null && user.passwordHash == password) {
+                            currentUserId = user.id
                             loginError = null
                             navController.navigate("home")
                         } else {
@@ -127,7 +134,10 @@ class MainActivity : ComponentActivity() {
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
                         onChatboxIconClick = {navController.navigate("chatbox")},
-                        onSettingsIconClick = {navController.navigate("settings")}
+                        onSettingsIconClick = {navController.navigate("settings")},
+                        onStartQuizClick = {
+                            currentQuizScore = 0
+                            navController.navigate("quiz1")}
                     )}
                     composable("weeklyChallengeMenu") {WeeklyChallengeMenuScreen(
                         onProfileClick = {navController.navigate("profile")},
@@ -135,7 +145,8 @@ class MainActivity : ComponentActivity() {
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
                         onChatboxIconClick = {navController.navigate("chatbox")},
-                        onSettingsIconClick = {navController.navigate("settings")}
+                        onSettingsIconClick = {navController.navigate("settings")},
+                        onWeeklyChallengeClick = {navController.navigate("weeklyChallenge")}
                     )}
                     composable("profile") {ProfileScreen(
                         onProfileClick = {navController.navigate("profile")},
@@ -143,7 +154,8 @@ class MainActivity : ComponentActivity() {
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
                         onChatboxIconClick = {navController.navigate("chatbox")},
-                        onSettingsIconClick = {navController.navigate("settings")}
+                        onSettingsIconClick = {navController.navigate("settings")},
+                        onProgressDashboardClick = {navController.navigate("progressDashboard")}
                     )}
                     composable("speech") {SpeechScreen(
                         onProfileClick = {navController.navigate("profile")},
@@ -169,7 +181,11 @@ class MainActivity : ComponentActivity() {
                         onChatboxIconClick = {navController.navigate("chatbox")},
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
-                    composable("progressDashboard") {ProgressDashboardScreen(
+                    composable("progressDashboard"){
+                        val uid = currentUserId ?: return@composable
+                        ProgressDashboardScreen(
+                            userId = uid,
+                            userProgressDao = userProgressDao,
                         onProfileClick = {navController.navigate("profile")},
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
@@ -292,6 +308,7 @@ class MainActivity : ComponentActivity() {
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                     composable("quiz1") {QuizQOneScreen(
+                        onNextQuestion = { navController.navigate("quiz2")},
                         onProfileClick = {navController.navigate("profile")},
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
@@ -300,6 +317,7 @@ class MainActivity : ComponentActivity() {
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                     composable("quiz2") {QuizQTwoScreen(
+                        onNextQuestion = { navController.navigate("quiz3")},
                         onProfileClick = {navController.navigate("profile")},
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
@@ -308,6 +326,7 @@ class MainActivity : ComponentActivity() {
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                     composable("quiz3") {QuizQThreeScreen(
+                        onNextQuestion = { navController.navigate("quiz4")},
                         onProfileClick = {navController.navigate("profile")},
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
@@ -316,6 +335,7 @@ class MainActivity : ComponentActivity() {
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                     composable("quiz4") {QuizQFourScreen(
+                        onNextQuestion = { navController.navigate("quiz5")},
                         onProfileClick = {navController.navigate("profile")},
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
@@ -324,6 +344,22 @@ class MainActivity : ComponentActivity() {
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                     composable("quiz5") {QuizQFiveScreen(
+                        totalScore = currentQuizScore,
+                        onSubmitQuiz = {totalScore ->
+                            val userId = currentUserId ?: return@QuizQFiveScreen
+
+                            lifecycleScope.launch {
+                                val progress = UserProgress(
+                                    userId = userId,
+                                    language = "Spanish",
+                                    lessonId = "quiz",
+                                    completed = true,
+                                    lastScore = totalScore
+                                )
+                                userProgressDao.insertOrUpdateProgress(progress)
+                            }
+                            navController.navigate("home")
+                        },
                         onProfileClick = {navController.navigate("profile")},
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
@@ -803,6 +839,8 @@ fun SpanishLessonScreen(
 }
 @Composable
 fun ProgressDashboardScreen(
+    userId: Long,
+    userProgressDao: UserProgressDao,
     onProfileClick: () -> Unit = {},
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
@@ -810,6 +848,14 @@ fun ProgressDashboardScreen(
     onChatboxIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {}
 ){
+    var progressList by remember{mutableStateOf<List<UserProgress>>(emptyList())}
+    LaunchedEffect(userId) {
+        progressList = userProgressDao.getProgressForUser(userId)
+    }
+
+    val totalEntries = progressList.size
+    val completedCount = progressList.count{it.completed}
+
     Box(Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(R.drawable.progressdashboard),
@@ -817,6 +863,26 @@ fun ProgressDashboardScreen(
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.FillBounds
         )
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset(y = 660.dp)
+                .padding(horizontal = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Lessons/Quizzes Done: $completedCount",
+                fontSize = 20.sp,
+                color = Color.Black
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Total Activities Tracked: $totalEntries",
+                fontSize = 18.sp,
+                color = Color.Black
+            )
+        }
 
         Box(
             modifier = Modifier
@@ -869,7 +935,8 @@ fun QuizMenuScreen(
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
     onChatboxIconClick: () -> Unit = {},
-    onSettingsIconClick: () -> Unit = {}
+    onSettingsIconClick: () -> Unit = {},
+    onStartQuizClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
         Image(
@@ -885,6 +952,14 @@ fun QuizMenuScreen(
                 .fillMaxWidth()
                 .height(30.dp)
                 .clickable{onProfileClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 400.dp)
+                .fillMaxWidth()
+                .height(60.dp)
+                .clickable{onStartQuizClick()}
         )
 
         Box(
@@ -991,7 +1066,8 @@ fun WeeklyChallengeMenuScreen(
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
     onChatboxIconClick: () -> Unit = {},
-    onSettingsIconClick: () -> Unit = {}
+    onSettingsIconClick: () -> Unit = {},
+    onWeeklyChallengeClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
         Image(
@@ -1042,6 +1118,14 @@ fun WeeklyChallengeMenuScreen(
                 .offset(x = 350.dp, y = 830.dp)
                 .size(48.dp)
                 .clickable{onSettingsIconClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 430.dp)
+                .fillMaxWidth()
+                .height(30.dp)
+                .clickable{onWeeklyChallengeClick()}
         )
     }
 }
@@ -1113,7 +1197,8 @@ fun ProfileScreen(
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
     onChatboxIconClick: () -> Unit = {},
-    onSettingsIconClick: () -> Unit = {}
+    onSettingsIconClick: () -> Unit = {},
+    onProgressDashboardClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
         Image(
@@ -1164,6 +1249,14 @@ fun ProfileScreen(
                 .offset(x = 350.dp, y = 830.dp)
                 .size(48.dp)
                 .clickable{onSettingsIconClick()}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 550.dp)
+                .fillMaxWidth()
+                .height(30.dp)
+                .clickable{onProgressDashboardClick()}
         )
     }
 }
@@ -1960,7 +2053,8 @@ fun QuizQOneScreen(
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
     onChatboxIconClick: () -> Unit = {},
-    onSettingsIconClick: () -> Unit = {}
+    onSettingsIconClick: () -> Unit = {},
+    onNextQuestion: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
         Image(
@@ -1968,6 +2062,14 @@ fun QuizQOneScreen(
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.FillBounds
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 600.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{onNextQuestion()}
         )
 
         Box(
@@ -2021,7 +2123,10 @@ fun QuizQTwoScreen(
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
     onChatboxIconClick: () -> Unit = {},
-    onSettingsIconClick: () -> Unit = {}
+    onSettingsIconClick: () -> Unit = {},
+    onNextQuestion: () -> Unit = {}
+
+
 ){
     Box(Modifier.fillMaxSize()) {
         Image(
@@ -2029,6 +2134,14 @@ fun QuizQTwoScreen(
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.FillBounds
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 600.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{onNextQuestion()}
         )
 
         Box(
@@ -2082,7 +2195,10 @@ fun QuizQThreeScreen(
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
     onChatboxIconClick: () -> Unit = {},
-    onSettingsIconClick: () -> Unit = {}
+    onSettingsIconClick: () -> Unit = {},
+    onNextQuestion: () -> Unit = {}
+
+
 ){
     Box(Modifier.fillMaxSize()) {
         Image(
@@ -2090,6 +2206,14 @@ fun QuizQThreeScreen(
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.FillBounds
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 600.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{onNextQuestion()}
         )
 
         Box(
@@ -2143,7 +2267,10 @@ fun QuizQFourScreen(
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
     onChatboxIconClick: () -> Unit = {},
-    onSettingsIconClick: () -> Unit = {}
+    onSettingsIconClick: () -> Unit = {},
+    onNextQuestion: () -> Unit = {}
+
+
 ){
     Box(Modifier.fillMaxSize()) {
         Image(
@@ -2151,6 +2278,14 @@ fun QuizQFourScreen(
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.FillBounds
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 600.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{onNextQuestion()}
         )
 
         Box(
@@ -2204,7 +2339,10 @@ fun QuizQFiveScreen(
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
     onChatboxIconClick: () -> Unit = {},
-    onSettingsIconClick: () -> Unit = {}
+    onSettingsIconClick: () -> Unit = {},
+    totalScore: Int,
+    onSubmitQuiz: (Int) -> Unit = {}
+
 ){
     Box(Modifier.fillMaxSize()) {
         Image(
@@ -2212,6 +2350,14 @@ fun QuizQFiveScreen(
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.FillBounds
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 650.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{onSubmitQuiz(totalScore)}
         )
 
         Box(
