@@ -1,5 +1,6 @@
 package edu.farmingdale.langfusion
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,6 +9,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,6 +22,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -50,7 +53,9 @@ import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private var currentUserId: Long? = null
+    private var currentUser: User? = null
     private var currentQuizScore: Int = 0
+    @SuppressLint("SuspiciousIndentation")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -77,6 +82,7 @@ class MainActivity : ComponentActivity() {
                         val user = userDao.getUserByEmail(email)
                         if (user != null && user.passwordHash == password) {
                             currentUserId = user.id
+                            currentUser = user
                             loginError = null
                             navController.navigate("home")
                         } else {
@@ -110,7 +116,7 @@ class MainActivity : ComponentActivity() {
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")}
                         )
                     }
@@ -119,7 +125,7 @@ class MainActivity : ComponentActivity() {
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")},
                         onSpanishLessonMenuClick = {navController.navigate("spanishLessons")},
                         onFrenchLessonMenuClick = {navController.navigate("frenchLessons")},
@@ -133,7 +139,7 @@ class MainActivity : ComponentActivity() {
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")},
                         onStartQuizClick = {
                             currentQuizScore = 0
@@ -144,16 +150,19 @@ class MainActivity : ComponentActivity() {
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")},
                         onWeeklyChallengeClick = {navController.navigate("weeklyChallenge")}
                     )}
-                    composable("profile") {ProfileScreen(
+                    composable("profile") {
+                        val name = currentUser?.let {"${it.firstName} ${it.lastName}"} ?: ""
+                     ProfileScreen(
+                         fullName = name,
                         onProfileClick = {navController.navigate("profile")},
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                         onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")},
                         onProgressDashboardClick = {navController.navigate("progressDashboard")}
                     )}
@@ -162,15 +171,15 @@ class MainActivity : ComponentActivity() {
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
-                    composable("chatbox") {ChatBoxScreen(
+                    composable("chatbot") {ChatBotScreen(
                         onProfileClick = {navController.navigate("profile")},
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                     composable("settings") {SettingsScreen(
@@ -178,8 +187,14 @@ class MainActivity : ComponentActivity() {
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
-                        onSettingsIconClick = {navController.navigate("settings")}
+                        onChatbotIconClick = {navController.navigate("chatbot")},
+                        onSettingsIconClick = {navController.navigate("settings")},
+                        onLogOffClick = {
+                            currentUserId = null
+                            currentUser = null
+                        navController.navigate("welcome") {
+                            popUpTo("welcome") {inclusive = true}
+                        }}
                     )}
                     composable("progressDashboard"){
                         val uid = currentUserId ?: return@composable
@@ -190,16 +205,18 @@ class MainActivity : ComponentActivity() {
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
 
                     composable("weeklyChallenge") {WeeklyChallengeScreen(
+                        onFinished = {navController.navigate("home") {
+                            popUpTo("home") {inclusive = false} } },
                         onProfileClick = {navController.navigate("profile")},
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                     composable("spanishLessons") {SpanishLessonScreen(
@@ -207,7 +224,7 @@ class MainActivity : ComponentActivity() {
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")},
                         onSpanishLessonOneClick = {navController.navigate("spanishLesson1")},
                         onSpanishLessonTwoClick = {navController.navigate("spanishLesson2")},
@@ -218,7 +235,7 @@ class MainActivity : ComponentActivity() {
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                     composable("spanishLesson2") {SpanishLessonTwoScreen(
@@ -226,7 +243,7 @@ class MainActivity : ComponentActivity() {
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                     composable("spanishLesson3") {SpanishLessonThreeScreen(
@@ -234,7 +251,7 @@ class MainActivity : ComponentActivity() {
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                     composable("frenchLessons") {FrenchLessonScreen(
@@ -242,7 +259,7 @@ class MainActivity : ComponentActivity() {
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")},
                         onFrenchLessonOneClick = {navController.navigate("frenchLesson1")},
                         onFrenchLessonTwoClick = {navController.navigate("frenchLesson2")},
@@ -253,7 +270,7 @@ class MainActivity : ComponentActivity() {
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                     composable("frenchLesson2") {FrenchLessonTwoScreen(
@@ -261,7 +278,7 @@ class MainActivity : ComponentActivity() {
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                     composable("frenchLesson3") {FrenchLessonThreeScreen(
@@ -269,7 +286,7 @@ class MainActivity : ComponentActivity() {
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                     composable("italianLessons") {ItalianLessonScreen(
@@ -277,7 +294,7 @@ class MainActivity : ComponentActivity() {
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")},
                         onItalianLessonOneClick = {navController.navigate("italianLesson1")},
                         onItalianLessonTwoClick = {navController.navigate("italianLesson2")},
@@ -288,7 +305,7 @@ class MainActivity : ComponentActivity() {
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                     composable("italianLesson2") {ItalianLessonTwoScreen(
@@ -296,7 +313,7 @@ class MainActivity : ComponentActivity() {
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                     composable("italianLesson3") {ItalianLessonThreeScreen(
@@ -304,67 +321,82 @@ class MainActivity : ComponentActivity() {
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                     composable("quiz1") {QuizQOneScreen(
-                        onNextQuestion = { navController.navigate("quiz2")},
+                        onAnswerSelected = { isCorrect ->
+                            if (isCorrect) currentQuizScore += 1
+                                navController.navigate("quiz2")},
                         onProfileClick = {navController.navigate("profile")},
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                     composable("quiz2") {QuizQTwoScreen(
-                        onNextQuestion = { navController.navigate("quiz3")},
+                        onAnswerSelected = { isCorrect ->
+                            if (isCorrect) currentQuizScore += 1
+                            navController.navigate("quiz3")},
                         onProfileClick = {navController.navigate("profile")},
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                     composable("quiz3") {QuizQThreeScreen(
-                        onNextQuestion = { navController.navigate("quiz4")},
+                        onAnswerSelected = { isCorrect ->
+                            if (isCorrect) currentQuizScore += 1
+                            navController.navigate("quiz4")},
                         onProfileClick = {navController.navigate("profile")},
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                     composable("quiz4") {QuizQFourScreen(
-                        onNextQuestion = { navController.navigate("quiz5")},
+                        onAnswerSelected = { isCorrect ->
+                            if (isCorrect) currentQuizScore += 1
+                            navController.navigate("quiz5")},
                         onProfileClick = {navController.navigate("profile")},
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                     composable("quiz5") {QuizQFiveScreen(
-                        totalScore = currentQuizScore,
-                        onSubmitQuiz = {totalScore ->
-                            val userId = currentUserId ?: return@QuizQFiveScreen
-
-                            lifecycleScope.launch {
-                                val progress = UserProgress(
-                                    userId = userId,
-                                    language = "Spanish",
-                                    lessonId = "quiz",
-                                    completed = true,
-                                    lastScore = totalScore
-                                )
-                                userProgressDao.insertOrUpdateProgress(progress)
+                        totalScoreSoFar = currentQuizScore,
+                        onAnswerSelected = { isCorrect ->
+                            if (isCorrect) currentQuizScore += 1
+                        },
+                        onQuizFinished = { finalScore ->
+                            val userId = currentUserId
+                            val score = finalScore
+                                lifecycleScope.launch {
+                                    if (userId != null) {
+                                    val progress = UserProgress(
+                                        userId = userId,
+                                        language = "Spanish",
+                                        lessonId = "quiz",
+                                        completed = true,
+                                        lastScore = score
+                                    )
+                                    userProgressDao.insertOrUpdateProgress(progress)
+                                }
                             }
-                            navController.navigate("home")
+                            navController.navigate("home") {
+                                popUpTo("home") {inclusive = false}
+                            }
                         },
                         onProfileClick = {navController.navigate("profile")},
                         onHomeIconClick = {navController.navigate("home")},
                         onLessonIconClick = {navController.navigate("lessonMenu")},
                         onSpeechIconClick = {navController.navigate("speech")},
-                        onChatboxIconClick = {navController.navigate("chatbox")},
+                        onChatbotIconClick = {navController.navigate("chatbot")},
                         onSettingsIconClick = {navController.navigate("settings")}
                     )}
                 }
@@ -581,7 +613,7 @@ fun HomeScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
@@ -618,9 +650,9 @@ fun HomeScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -649,7 +681,7 @@ fun HomeScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -667,7 +699,7 @@ fun LessonMenuScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {},
     onSpanishLessonMenuClick: () -> Unit = {},
     onFrenchLessonMenuClick: () -> Unit = {},
@@ -683,9 +715,9 @@ fun LessonMenuScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -738,7 +770,7 @@ fun LessonMenuScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -755,7 +787,7 @@ fun SpanishLessonScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {},
     onSpanishLessonOneClick: () -> Unit = {},
     onSpanishLessonTwoClick: () -> Unit = {},
@@ -771,9 +803,9 @@ fun SpanishLessonScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -802,7 +834,7 @@ fun SpanishLessonScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -845,7 +877,7 @@ fun ProgressDashboardScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {}
 ){
     var progressList by remember{mutableStateOf<List<UserProgress>>(emptyList())}
@@ -858,7 +890,7 @@ fun ProgressDashboardScreen(
 
     Box(Modifier.fillMaxSize()) {
         Image(
-            painter = painterResource(R.drawable.progressdashboard),
+            painter = painterResource(R.drawable.progress_dashboard),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.FillBounds
@@ -886,9 +918,9 @@ fun ProgressDashboardScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -917,7 +949,7 @@ fun ProgressDashboardScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -934,7 +966,7 @@ fun QuizMenuScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {},
     onStartQuizClick: () -> Unit = {}
 ){
@@ -948,9 +980,9 @@ fun QuizMenuScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -987,7 +1019,7 @@ fun QuizMenuScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -1004,9 +1036,13 @@ fun SettingsScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
-    onSettingsIconClick: () -> Unit = {}
+    onChatbotIconClick: () -> Unit = {},
+    onSettingsIconClick: () -> Unit = {},
+    onLogOffClick: () -> Unit = {}
 ){
+    var notificationsEnabled by remember { mutableStateOf(false) }
+    var locationEnabled by remember { mutableStateOf(false) }
+
     Box(Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(R.drawable.settings),
@@ -1017,9 +1053,9 @@ fun SettingsScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -1048,7 +1084,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -1056,6 +1092,42 @@ fun SettingsScreen(
                 .offset(x = 350.dp, y = 830.dp)
                 .size(48.dp)
                 .clickable{onSettingsIconClick()}
+        )
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .offset(x = 0.dp,y = 260.dp)
+                .fillMaxWidth()
+                .padding(32.dp)
+        ) {
+            Spacer(Modifier.weight(1f))
+            Switch(
+                checked = notificationsEnabled,
+                onCheckedChange = {notificationsEnabled = it}
+            )
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .offset(x = 0.dp,y = 330.dp)
+                .fillMaxWidth()
+                .padding(32.dp)
+        ) {
+            Spacer(Modifier.weight(1f))
+            Switch(
+                checked = locationEnabled,
+                onCheckedChange = {locationEnabled = it}
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp,y = 500.dp)
+                .fillMaxWidth()
+                .height(60.dp)
+                .clickable{onLogOffClick()}
         )
     }
 }
@@ -1065,7 +1137,7 @@ fun WeeklyChallengeMenuScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {},
     onWeeklyChallengeClick: () -> Unit = {}
 ){
@@ -1079,9 +1151,9 @@ fun WeeklyChallengeMenuScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -1110,7 +1182,7 @@ fun WeeklyChallengeMenuScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -1131,13 +1203,15 @@ fun WeeklyChallengeMenuScreen(
 }
 @Composable
 fun WeeklyChallengeScreen(
+    onFinished: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {}
 ){
+    var resultText by remember {mutableStateOf<String?>(null)  }
     Box(Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(R.drawable.weeklychallenge),
@@ -1148,9 +1222,38 @@ fun WeeklyChallengeScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 0.dp, y = 260.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(80.dp)
+                .clickable{resultText = "Incorrect! Better Luck Next Time."}
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 360.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{resultText = "Incorrect! Better Luck Next Time."}
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 460.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{resultText = "Correct! Good Job."}
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 560.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{resultText = "Incorrect! Better Luck Next Time."}
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 230.dp, y = 55.dp)
+                .fillMaxWidth()
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -1179,7 +1282,7 @@ fun WeeklyChallengeScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -1189,6 +1292,23 @@ fun WeeklyChallengeScreen(
                 .clickable{onSettingsIconClick()}
         )
     }
+    resultText?.let {message ->
+        AlertDialog(
+            onDismissRequest = {},
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            resultText = null
+                            onFinished()
+                        }
+                    ){
+                        Text("Ok")
+                    }
+                },
+                title = {Text("Weekly Challenge")},
+                text = {Text(message)}
+        )
+    }
 }
 @Composable
 fun ProfileScreen(
@@ -1196,9 +1316,10 @@ fun ProfileScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {},
-    onProgressDashboardClick: () -> Unit = {}
+    onProgressDashboardClick: () -> Unit = {},
+    fullName: String
 ){
     Box(Modifier.fillMaxSize()) {
         Image(
@@ -1210,9 +1331,9 @@ fun ProfileScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -1241,7 +1362,7 @@ fun ProfileScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -1258,6 +1379,16 @@ fun ProfileScreen(
                 .height(30.dp)
                 .clickable{onProgressDashboardClick()}
         )
+
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 380.dp)
+                .fillMaxWidth()
+                .height(60.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(text = fullName, fontSize = 36.sp, color = Color.Black)
+        }
     }
 }
 @Composable
@@ -1266,7 +1397,7 @@ fun SpeechScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
@@ -1279,9 +1410,9 @@ fun SpeechScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -1310,7 +1441,7 @@ fun SpeechScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -1327,7 +1458,7 @@ fun ItalianLessonScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {},
     onItalianLessonOneClick: () -> Unit = {},
     onItalianLessonTwoClick: () -> Unit = {},
@@ -1343,9 +1474,9 @@ fun ItalianLessonScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -1374,7 +1505,7 @@ fun ItalianLessonScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -1415,7 +1546,7 @@ fun FrenchLessonScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {},
     onFrenchLessonOneClick: () -> Unit = {},
     onFrenchLessonTwoClick: () -> Unit = {},
@@ -1431,9 +1562,9 @@ fun FrenchLessonScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -1462,7 +1593,7 @@ fun FrenchLessonScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -1503,7 +1634,7 @@ fun SpanishLessonOneScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
@@ -1516,9 +1647,9 @@ fun SpanishLessonOneScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -1547,7 +1678,7 @@ fun SpanishLessonOneScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -1564,7 +1695,7 @@ fun SpanishLessonTwoScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
@@ -1577,9 +1708,9 @@ fun SpanishLessonTwoScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -1608,7 +1739,7 @@ fun SpanishLessonTwoScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -1625,7 +1756,7 @@ fun SpanishLessonThreeScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
@@ -1638,9 +1769,9 @@ fun SpanishLessonThreeScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -1669,7 +1800,7 @@ fun SpanishLessonThreeScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -1686,7 +1817,7 @@ fun FrenchLessonOneScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
@@ -1699,9 +1830,9 @@ fun FrenchLessonOneScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -1730,7 +1861,7 @@ fun FrenchLessonOneScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -1747,7 +1878,7 @@ fun FrenchLessonTwoScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
@@ -1760,9 +1891,9 @@ fun FrenchLessonTwoScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -1791,7 +1922,7 @@ fun FrenchLessonTwoScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -1808,7 +1939,7 @@ fun FrenchLessonThreeScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
@@ -1821,9 +1952,9 @@ fun FrenchLessonThreeScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -1852,7 +1983,7 @@ fun FrenchLessonThreeScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -1869,7 +2000,7 @@ fun ItalianLessonOneScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
@@ -1882,9 +2013,9 @@ fun ItalianLessonOneScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -1913,7 +2044,7 @@ fun ItalianLessonOneScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -1930,7 +2061,7 @@ fun ItalianLessonTwoScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
@@ -1943,9 +2074,9 @@ fun ItalianLessonTwoScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -1974,7 +2105,7 @@ fun ItalianLessonTwoScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -1991,7 +2122,7 @@ fun ItalianLessonThreeScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
@@ -2004,9 +2135,9 @@ fun ItalianLessonThreeScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -2035,7 +2166,7 @@ fun ItalianLessonThreeScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -2048,13 +2179,13 @@ fun ItalianLessonThreeScreen(
 }
 @Composable
 fun QuizQOneScreen(
+    onAnswerSelected: (Boolean) -> Unit = {},
     onProfileClick: () -> Unit = {},
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
-    onSettingsIconClick: () -> Unit = {},
-    onNextQuestion: () -> Unit = {}
+    onChatbotIconClick: () -> Unit = {},
+    onSettingsIconClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
         Image(
@@ -2066,17 +2197,38 @@ fun QuizQOneScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 0.dp, y = 600.dp)
+                .offset(x = 0.dp, y = 260.dp)
                 .fillMaxWidth()
                 .height(80.dp)
-                .clickable{onNextQuestion()}
+                .clickable{onAnswerSelected(false)}
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 360.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{onAnswerSelected(true)}
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 460.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{onAnswerSelected(false)}
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 560.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{onAnswerSelected(false)}
         )
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -2105,7 +2257,7 @@ fun QuizQOneScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -2118,15 +2270,13 @@ fun QuizQOneScreen(
 }
 @Composable
 fun QuizQTwoScreen(
+    onAnswerSelected: (Boolean) -> Unit = {},
     onProfileClick: () -> Unit = {},
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
-    onSettingsIconClick: () -> Unit = {},
-    onNextQuestion: () -> Unit = {}
-
-
+    onChatbotIconClick: () -> Unit = {},
+    onSettingsIconClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
         Image(
@@ -2138,17 +2288,38 @@ fun QuizQTwoScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 0.dp, y = 600.dp)
+                .offset(x = 0.dp, y = 260.dp)
                 .fillMaxWidth()
                 .height(80.dp)
-                .clickable{onNextQuestion()}
+                .clickable{onAnswerSelected(false)}
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 360.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{onAnswerSelected(false)}
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 460.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{onAnswerSelected(false)}
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 540.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{onAnswerSelected(true)}
         )
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -2177,7 +2348,7 @@ fun QuizQTwoScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -2190,15 +2361,13 @@ fun QuizQTwoScreen(
 }
 @Composable
 fun QuizQThreeScreen(
+    onAnswerSelected: (Boolean) -> Unit = {},
     onProfileClick: () -> Unit = {},
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
-    onSettingsIconClick: () -> Unit = {},
-    onNextQuestion: () -> Unit = {}
-
-
+    onChatbotIconClick: () -> Unit = {},
+    onSettingsIconClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
         Image(
@@ -2210,17 +2379,38 @@ fun QuizQThreeScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 0.dp, y = 600.dp)
+                .offset(x = 0.dp, y = 260.dp)
                 .fillMaxWidth()
                 .height(80.dp)
-                .clickable{onNextQuestion()}
+                .clickable{onAnswerSelected(true)}
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 360.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{onAnswerSelected(false)}
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 460.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{onAnswerSelected(false)}
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 560.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{onAnswerSelected(false)}
         )
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -2249,7 +2439,7 @@ fun QuizQThreeScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -2262,15 +2452,13 @@ fun QuizQThreeScreen(
 }
 @Composable
 fun QuizQFourScreen(
+    onAnswerSelected: (Boolean) -> Unit = {},
     onProfileClick: () -> Unit = {},
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
-    onSettingsIconClick: () -> Unit = {},
-    onNextQuestion: () -> Unit = {}
-
-
+    onChatbotIconClick: () -> Unit = {},
+    onSettingsIconClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
         Image(
@@ -2282,17 +2470,38 @@ fun QuizQFourScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 0.dp, y = 600.dp)
+                .offset(x = 0.dp, y = 260.dp)
                 .fillMaxWidth()
                 .height(80.dp)
-                .clickable{onNextQuestion()}
+                .clickable{onAnswerSelected(false)}
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 360.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{onAnswerSelected(true)}
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 460.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{onAnswerSelected(false)}
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 560.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{onAnswerSelected(false)}
         )
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -2321,7 +2530,7 @@ fun QuizQFourScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -2338,12 +2547,15 @@ fun QuizQFiveScreen(
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {},
-    totalScore: Int,
-    onSubmitQuiz: (Int) -> Unit = {}
-
+    totalScoreSoFar: Int,
+    onAnswerSelected: (Boolean) -> Unit,
+    onQuizFinished: (Int) -> Unit = {}
 ){
+    var finalScore by remember { mutableStateOf(totalScoreSoFar) }
+    var showDialog by remember { mutableStateOf(false) }
+
     Box(Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(R.drawable.quizq5),
@@ -2354,17 +2566,46 @@ fun QuizQFiveScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 0.dp, y = 650.dp)
+                .offset(x = 0.dp, y = 260.dp)
                 .fillMaxWidth()
                 .height(80.dp)
-                .clickable{onSubmitQuiz(totalScore)}
+                .clickable{finalScore = totalScoreSoFar + 1
+                onAnswerSelected(true)
+                showDialog = true}
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 360.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{finalScore = totalScoreSoFar
+                    onAnswerSelected(false)
+                    showDialog = true}
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 460.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{finalScore = totalScoreSoFar
+                    onAnswerSelected(false)
+                    showDialog = true}
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = 560.dp)
+                .fillMaxWidth()
+                .height(80.dp)
+                .clickable{finalScore = totalScoreSoFar
+                    onAnswerSelected(false)
+                    showDialog = true}
         )
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -2393,7 +2634,7 @@ fun QuizQFiveScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
@@ -2403,14 +2644,31 @@ fun QuizQFiveScreen(
                 .clickable{onSettingsIconClick()}
         )
     }
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = {},
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDialog = false
+                            onQuizFinished(finalScore)
+                        }
+                    ) {
+                        Text("Ok")
+                    }
+                },
+                title = {Text("Quiz Result")},
+                text = {Text("${finalScore}/5")}
+        )
+    }
 }
 @Composable
-fun ChatBoxScreen(
+fun ChatBotScreen(
     onProfileClick: () -> Unit = {},
     onHomeIconClick: () -> Unit = {},
     onLessonIconClick: () -> Unit = {},
     onSpeechIconClick: () -> Unit = {},
-    onChatboxIconClick: () -> Unit = {},
+    onChatbotIconClick: () -> Unit = {},
     onSettingsIconClick: () -> Unit = {}
 ){
     Box(Modifier.fillMaxSize()) {
@@ -2423,9 +2681,9 @@ fun ChatBoxScreen(
 
         Box(
             modifier = Modifier
-                .offset(x = 230.dp, y = 95.dp)
+                .offset(x = 230.dp, y = 55.dp)
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(50.dp)
                 .clickable{onProfileClick()}
         )
 
@@ -2454,7 +2712,7 @@ fun ChatBoxScreen(
             modifier = Modifier
                 .offset(x = 270.dp, y = 830.dp)
                 .size(48.dp)
-                .clickable{onChatboxIconClick()}
+                .clickable{onChatbotIconClick()}
         )
 
         Box(
