@@ -376,6 +376,7 @@ class MainActivity : ComponentActivity() {
                         onQuizFinished = { finalScore ->
                             val userId = currentUserId
                             val score = finalScore
+
                                 lifecycleScope.launch {
                                     if (userId != null) {
                                     val progress = UserProgress(
