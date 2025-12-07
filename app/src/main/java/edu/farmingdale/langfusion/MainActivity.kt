@@ -1,5 +1,6 @@
 package edu.farmingdale.langfusion
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -64,6 +65,7 @@ class MainActivity : ComponentActivity() {
     private var currentUserId: Long? = null
     private var currentUser: User? = null
     private var currentQuizScore: Int = 0
+    @SuppressLint("SuspiciousIndentation")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         translatorHelper.init(TranslateLanguage.SPANISH)
